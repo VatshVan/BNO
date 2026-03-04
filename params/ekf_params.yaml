@@ -1,0 +1,54 @@
+ekf_fusion_node:
+  ros__parameters:
+    fallback_lat: 19.1334
+    fallback_lon: 72.9133
+    fallback_alt: 15.0
+    
+    # State: [x, y, theta, v, omega, b_omega]
+    p_matrix_diag: [1.0, 1.0, 1.0, 1.0, 1.0, 0.1]
+    
+    # Process Noise Q: Tuned for physical chassis slip and BNO thermal drift
+    q_matrix_diag: [0.05, 0.05, 0.01, 0.1, 0.01, 0.0005]
+    
+    # Measurement Noise R: [x_gps, y_gps, v_odom, omega_imu]
+    # Set for consumer GNSS (2.5m CEP) and BNO055 dynamic noise
+    r_matrix_diag: [6.25, 6.25, 0.01, 0.001]
+    
+    loop_rate_hz: 100.0
+
+    # Absolute heading injection (GNSS COG)
+    heading_r: 0.1
+    cog_velocity_gate: 1.5
+
+    # ZARU / ZUPT kinematic constraints
+    zaru_r_omega: 1e-5
+    zaru_r_v: 1e-4
+    stationary_velocity_threshold: 0.05
+    stationary_duration_sec: 0.5
+
+    # Lever arm compensation (GNSS antenna -> base_link)
+    gnss_lever_arm_x: 0.0
+    gnss_lever_arm_y: 0.0
+    use_tf_lever_arm: false
+
+    # State persistence (warm boot)
+    state_cache_path: "/tmp/ekf_state_cache.json"
+    state_cache_rate_hz: 1.0
+    warm_boot_p_inflate: 5.0
+    warm_boot_max_age_sec: 3600.0
+
+    # Divergence diagnostics (chi-squared NIS gate)
+    chi2_threshold: 15.0
+    chi2_consec_limit: 10
+
+imu_serial_driver:
+  ros__parameters:
+    port: "/dev/ttyUSB0"
+    baudrate: 115200
+    frame_id: "imu_link"
+
+gnss_serial_driver:
+  ros__parameters:
+    port: "/dev/ttyUSB1"
+    baudrate: 115200
+    frame_id: "gps_link"
