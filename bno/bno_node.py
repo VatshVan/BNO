@@ -1,7 +1,9 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.time import Time
 from sensor_msgs.msg import Imu
 import serial
+import math
 
 class IMUSerialDriver(Node):
     def __init__(self):
@@ -34,18 +36,42 @@ class IMUSerialDriver(Node):
 
     def deserialize_payload(self, payload):
         data_vector = payload.split(',')
-        if len(data_vector) == 6:
+        if len(data_vector) == 7:
             msg = Imu()
-            msg.header.stamp = self.get_clock().now().to_msg()
+            
+            timestamp_ms = float(data_vector[0])
+            sec = int(timestamp_ms // 1000)
+            nanosec = int((timestamp_ms % 1000) * 1e6)
+            msg.header.stamp = Time(seconds=sec, nanoseconds=nanosec).to_msg()
             msg.header.frame_id = self.frame_id
             
-            msg.linear_acceleration.x = float(data_vector[0])
-            msg.linear_acceleration.y = float(data_vector[1])
-            msg.linear_acceleration.z = float(data_vector[2])
+            ax = float(data_vector[1])
+            ay = float(data_vector[2])
+            az = float(data_vector[3])
             
-            msg.angular_velocity.x = float(data_vector[3])
-            msg.angular_velocity.y = float(data_vector[4])
-            msg.angular_velocity.z = float(data_vector[5])
+            msg.linear_acceleration.x = ax
+            msg.linear_acceleration.y = ay
+            msg.linear_acceleration.z = az
+            
+            msg.angular_velocity.x = float(data_vector[4])
+            msg.angular_velocity.y = float(data_vector[5])
+            msg.angular_velocity.z = float(data_vector[6])
+            
+            roll = math.atan2(ay, az)
+            pitch = math.atan2(-ax, math.hypot(ay, az))
+            yaw = 0.0  
+            
+            cy = math.cos(yaw * 0.5)
+            sy = math.sin(yaw * 0.5)
+            cp = math.cos(pitch * 0.5)
+            sp = math.sin(pitch * 0.5)
+            cr = math.cos(roll * 0.5)
+            sr = math.sin(roll * 0.5)
+            
+            msg.orientation.w = cr * cp * cy + sr * sp * sy
+            msg.orientation.x = sr * cp * cy - cr * sp * sy
+            msg.orientation.y = cr * sp * cy + sr * cp * sy
+            msg.orientation.z = cr * cp * sy - sr * sp * cy
             
             msg.orientation_covariance[0] = -1.0
             

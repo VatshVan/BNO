@@ -39,12 +39,17 @@ class GNSSSerialDriver(Node):
     def deserialize_gga_payload(self, payload):
         tokens = payload.split(',')
         
-        if len(tokens) < 15 or tokens[6] == '0':
+        if len(tokens) < 15:
             return
 
         msg = NavSatFix()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = self.frame_id
+
+        if tokens[6] == '0':
+            msg.status.status = NavSatStatus.STATUS_NO_FIX
+            self.gps_pub.publish(msg)
+            return
 
         msg.latitude = self.convert_nmea_to_decimal_degrees(tokens[2], tokens[3])
         msg.longitude = self.convert_nmea_to_decimal_degrees(tokens[4], tokens[5])

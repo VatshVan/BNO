@@ -1,1 +1,7 @@
 test_
+__pycache__/
+*.pyc
+bno/ekf_ros_node.py.bak
+bno/ekf_core.py.bak
+bno/ekf_ros_node.py.bak2
+bno/optimization.py
